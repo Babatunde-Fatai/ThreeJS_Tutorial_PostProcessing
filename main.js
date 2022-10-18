@@ -10,6 +10,8 @@ import {ShaderPass} from 'https://cdn.jsdelivr.net/npm/three@0.122/examples/jsm/
 import {SSAOPass} from 'https://cdn.jsdelivr.net/npm/three@0.122/examples/jsm/postprocessing/SSAOPass.js';
 
 import {LuminosityShader} from 'https://cdn.jsdelivr.net/npm/three@0.122/examples/jsm/shaders/LuminosityShader.js';
+import {FBXLoader} from 'https://cdn.jsdelivr.net/npm/three@0.122/examples/jsm/loaders/FBXLoader.js';
+
 
 const _VS = `
 varying vec2 vUv;
@@ -74,11 +76,11 @@ class PostProcessingDemo {
 
     this._composer = new EffectComposer(this._threejs);
     this._composer.addPass(new RenderPass(this._scene, this._camera));
-    this._composer.addPass(new UnrealBloomPass({x: 1024, y: 1024}, 2.0, 0.0, 0.75));
-    this._composer.addPass(new GlitchPass());
-    this._composer.addPass(new ShaderPass(CrapShader));
+    // this._composer.addPass(new UnrealBloomPass({x: 1024, y: 1024}, 2.0, 0.0, 0.75));
+    // this._composer.addPass(new GlitchPass());
+    // this._composer.addPass(new ShaderPass(CrapShader));
 
-    let light = new THREE.DirectionalLight(0xFFFFFF, 1.0);
+    let light = new THREE.DirectionalLight(0xFFFFFF, 0.2);
     light.position.set(20, 100, 10);
     light.target.position.set(0, 0, 0);
     light.castShadow = true;
@@ -95,13 +97,41 @@ class PostProcessingDemo {
     light.shadow.camera.bottom = -100;
     this._scene.add(light);
 
-    light = new THREE.AmbientLight(0x101010);
+    light = new THREE.AmbientLight(0x111111);
     this._scene.add(light);
 
     const controls = new OrbitControls(
       this._camera, this._threejs.domElement);
     controls.target.set(0, 20, 0);
     controls.update();
+
+    const fbxLoader  = new FBXLoader();
+    const material = new THREE.MeshPhongMaterial( { color: 0x000000, specular: 0x666666, emissive: 0xff0000, shininess: 10, opacity: 0.9, transparent: true } );
+
+    fbxLoader.load(
+      'resources/test.fbx',
+      (object) => {
+          object.traverse(function (child) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+
+            const oldMat = child.material;
+
+            child.material = new THREE.MeshNormalMaterial( { flatShading: true } ) 
+
+             })
+
+          this._scene.add(object)
+    
+      },
+      (xhr) => {
+          console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+      },
+      (error) => {
+          console.log(error)
+      }
+  )
+
 
     const loader = new THREE.CubeTextureLoader();
     const texture = loader.load([
@@ -135,19 +165,19 @@ class PostProcessingDemo {
     this._scene.add(knot);
     this._knot = knot;
 
-    for (let x = -8; x < 8; x++) {
-      for (let y = -8; y < 8; y++) {
-        const box = new THREE.Mesh(
-          new THREE.BoxGeometry(2, 10, 2),
-          new THREE.MeshStandardMaterial({
-              color: 0x808080,
-          }));
-        box.position.set(Math.random() + x * 20, Math.random() * 4.0 + 5.0, Math.random() + y * 20);
-        box.castShadow = true;
-        box.receiveShadow = true;
-        this._scene.add(box);
-      }
-    }
+    // for (let x = -8; x < 8; x++) {
+    //   for (let y = -8; y < 8; y++) {
+    //     const box = new THREE.Mesh(
+    //       new THREE.BoxGeometry(2, 10, 2),
+    //       new THREE.MeshStandardMaterial({
+    //           color: 0x808080,
+    //       }));
+    //     box.position.set(Math.random() + x * 20, Math.random() * 4.0 + 5.0, Math.random() + y * 20);
+    //     box.castShadow = true;
+    //     box.receiveShadow = true;
+    //     this._scene.add(box);
+    //   }
+    // }
 
     this._RAF();
   }
